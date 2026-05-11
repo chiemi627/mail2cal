@@ -38,23 +38,49 @@ CONFIG = load_config()
 
 def parse_date(text):
     dates = []
+    used_ranges = []
+    has_explicit = False
+
+    def overlaps(start, end):
+        return any(start < r[1] and end > r[0] for r in used_ranges)
 
     for m in re.finditer(r'(\d{4})[年/\-](\d{1,2})[月/\-](\d{1,2})[日]?', text):
         y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
         try:
             dates.append((datetime(y, mo, d), m.start(), m.end()))
+            used_ranges.append((m.start(), m.end()))
+            has_explicit = True
         except ValueError:
             pass
 
     for m in re.finditer(r'(?<!\d[年/\-])(\d{1,2})月(\d{1,2})日', text):
+        if overlaps(m.start(), m.end()):
+            continue
         mo, d = int(m.group(1)), int(m.group(2))
         try:
             dt = datetime(TODAY.year, mo, d)
             if dt.date() < TODAY.date() - timedelta(days=30):
                 dt = datetime(TODAY.year + 1, mo, d)
             dates.append((dt, m.start(), m.end()))
+            used_ranges.append((m.start(), m.end()))
+            has_explicit = True
         except ValueError:
             pass
+
+    for m in re.finditer(r'(?<![:\d])(\d{1,2})/(\d{1,2})(?![:/\d])', text):
+        if overlaps(m.start(), m.end()):
+            continue
+        mo, d = int(m.group(1)), int(m.group(2))
+        if 1 <= mo <= 12 and 1 <= d <= 31:
+            try:
+                dt = datetime(TODAY.year, mo, d)
+                if dt.date() < TODAY.date() - timedelta(days=30):
+                    dt = datetime(TODAY.year + 1, mo, d)
+                dates.append((dt, m.start(), m.end()))
+                used_ranges.append((m.start(), m.end()))
+                has_explicit = True
+            except ValueError:
+                pass
 
     for m in re.finditer(r'(今週|来週|再来週)の?([月火水木金土日])曜?日?', text):
         week_offset = {"今週": 0, "来週": 1, "再来週": 2}[m.group(1)]
@@ -66,21 +92,11 @@ def parse_date(text):
         dt = TODAY + timedelta(days=days_ahead)
         dates.append((dt, m.start(), m.end()))
 
-    for m in re.finditer(r'(今日|本日|明日|明後日)', text):
-        offset = {"今日": 0, "本日": 0, "明日": 1, "明後日": 2}[m.group(1)]
-        dt = TODAY + timedelta(days=offset)
-        dates.append((dt, m.start(), m.end()))
-
-    for m in re.finditer(r'(?<![:\d])(\d{1,2})/(\d{1,2})(?![:/\d])', text):
-        mo, d = int(m.group(1)), int(m.group(2))
-        if 1 <= mo <= 12 and 1 <= d <= 31:
-            try:
-                dt = datetime(TODAY.year, mo, d)
-                if dt.date() < TODAY.date() - timedelta(days=30):
-                    dt = datetime(TODAY.year + 1, mo, d)
-                dates.append((dt, m.start(), m.end()))
-            except ValueError:
-                pass
+    if not has_explicit:
+        for m in re.finditer(r'(今日|本日|明日|明後日)', text):
+            offset = {"今日": 0, "本日": 0, "明日": 1, "明後日": 2}[m.group(1)]
+            dt = TODAY + timedelta(days=offset)
+            dates.append((dt, m.start(), m.end()))
 
     return dates
 
@@ -158,6 +174,11 @@ def parse_location(text):
     return ""
 
 
+def clean_title(s):
+    s = re.sub(r'<[@#!&:][^>]*>', '', s)
+    s = re.sub(r'[\x00-\x1f\x7f]', '', s)
+    return s.strip()
+
 def parse_title(text):
     patterns = [
         r'(?:件名|Subject|Re:)[：:\s]\s*(.+?)(?:\n|$)',
@@ -165,12 +186,13 @@ def parse_title(text):
     ]
     for pat in patterns:
         m = re.search(pat, text)
-        if m:
-            return m.group(1).strip()
+        if m and clean_title(m.group(1)):
+            return clean_title(m.group(1))[:10]
 
-    first_line = text.strip().split('\n')[0].strip()
-    if 0 < len(first_line) <= 50:
-        return first_line
+    for line in text.strip().split('\n'):
+        cleaned = clean_title(line)
+        if cleaned:
+            return cleaned[:10]
     return "予定"
 
 
