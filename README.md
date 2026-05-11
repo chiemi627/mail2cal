@@ -22,20 +22,19 @@ Azure API / Microsoft Graph API を使わず、ローカルのみで完結しま
 ## インストール
 
 ```bash
-# リポジトリをクローン
+# リポジトリをクローン（場所はどこでもOK）
 git clone https://github.com/chiemi627/mail2cal.git
 cd mail2cal
 
-# 設定ファイルをコピー（必要に応じて編集）
-cp mail2cal-config.json.example mail2cal-config.json
-
-# スクリプトに実行権限を付与
-chmod +x mail2cal-service.sh mail2cal.sh mail2cal-extract.py
-
-# macOSアプリをビルド（Spotlightから起動したい場合）
-mkdir -p ~/Applications
-osacompile -o ~/Applications/mail2cal.app mail2cal-app.applescript
+# インストール（設定ファイル作成 + アプリビルド）
+./install.sh
 ```
+
+`install.sh` が以下を自動で行います：
+- 設定ファイル `mail2cal-config.json` の作成（サンプルからコピー）
+- Spotlightから起動できるアプリ `~/Applications/mail2cal.app` のビルド
+
+設定ファイルは `mail2cal-config.json` を編集してください（後述）。
 
 ## 使い方
 
@@ -135,11 +134,12 @@ osacompile -o ~/Applications/mail2cal.app mail2cal-app.applescript
 ## ファイル構成
 
 ```
-mail2cal-app.applescript   # macOSアプリのソース
-mail2cal-service.sh        # 処理の制御（ダイアログ表示・.ics生成）
-mail2cal-extract.py        # 正規表現による日時抽出エンジン
-mail2cal.sh                # ターミナル版
-mail2cal-config.json       # 設定ファイル（各自作成）
+install.sh                    # インストールスクリプト
+mail2cal-app.applescript      # macOSアプリのソーステンプレート
+mail2cal-service.sh           # 処理の制御（ダイアログ表示・.ics生成）
+mail2cal-extract.py           # 正規表現による日時抽出エンジン
+mail2cal.sh                   # ターミナル版
+mail2cal-config.json          # 設定ファイル（install.shで作成）
 mail2cal-config.json.example  # 設定ファイルのサンプル
 ```
 

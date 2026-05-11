@@ -8,8 +8,8 @@ if emailText is "" then
 	return
 end if
 
-set homePath to POSIX path of (path to home folder)
-set scriptPath to homePath & "tools/mail2cal-service.sh"
+-- install.sh がビルド時に実際のパスを埋め込みます
+set scriptPath to "INSTALL_DIR/mail2cal-service.sh"
 
 try
 	do shell script "export PATH=/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:$PATH; echo " & quoted form of emailText & " | " & quoted form of scriptPath
