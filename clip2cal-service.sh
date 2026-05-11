@@ -107,9 +107,12 @@ import sys, json, os, subprocess, uuid
 
 config_path = os.path.join('$SCRIPT_DIR', 'clip2cal-config.json')
 tz = 'Asia/Tokyo'
+calendar_app = ''
 if os.path.exists(config_path):
     with open(config_path) as cf:
-        tz = json.load(cf).get('timezone', tz)
+        cfg = json.load(cf)
+        tz = cfg.get('timezone', tz)
+        calendar_app = cfg.get('calendar_app', '')
 
 data = json.load(sys.stdin)
 ics_dir = '$ICS_DIR'
@@ -142,5 +145,8 @@ END:VCALENDAR'''
     with open(path, 'w') as f:
         f.write(ics)
 
-    subprocess.run(['open', path])
+    if calendar_app:
+        subprocess.run(['open', '-a', calendar_app, path])
+    else:
+        subprocess.run(['open', path])
 "

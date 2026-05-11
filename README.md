@@ -111,6 +111,18 @@ cd clip2cal
 }
 ```
 
+### カレンダーアプリ（calendar_app）
+
+.icsファイルを開くアプリを指定します。空欄の場合はmacOSのデフォルトアプリで開きます。
+
+```json
+{
+  "calendar_app": "Microsoft Outlook"
+}
+```
+
+Apple Calendarを使う場合は空欄のままでOKです。
+
 ## 認識できる日時パターン
 
 ### 日付

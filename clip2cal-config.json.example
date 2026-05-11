@@ -10,5 +10,6 @@
   },
   "default_start_time": "09:00",
   "default_end_time": "10:00",
-  "location_keywords": ["号室", "号館", "会議室", "教室", "ホール", "ラウンジ", "センター", "棟"]
+  "location_keywords": ["号室", "号館", "会議室", "教室", "ホール", "ラウンジ", "センター", "棟"],
+  "calendar_app": ""
 }
