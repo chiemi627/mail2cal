@@ -144,5 +144,3 @@ END:VCALENDAR'''
 
     subprocess.run(['open', path])
 "
-
-osascript -e 'display dialog "カレンダーイベントを開きました。\nカレンダーアプリで「保存」を押して登録してください。" buttons {"OK"} default button "OK" with icon note with title "clip2cal"'
