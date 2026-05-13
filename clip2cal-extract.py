@@ -173,6 +173,24 @@ def parse_time(text):
         end = f"{h+1:02d}:00"
         times.append((start, end, m.start(), m.end(), "single"))
 
+    for m in re.finditer(r'午前', text):
+        pos = m.start()
+        if any(t[2] <= pos < t[3] for t in times):
+            continue
+        times.append(("09:00", "12:00", m.start(), m.end(), "ampm"))
+
+    for m in re.finditer(r'午後', text):
+        pos = m.start()
+        if any(t[2] <= pos < t[3] for t in times):
+            continue
+        times.append(("13:00", "18:00", m.start(), m.end(), "ampm"))
+
+    for m in re.finditer(r'終日', text):
+        pos = m.start()
+        if any(t[2] <= pos < t[3] for t in times):
+            continue
+        times.append(("", "", m.start(), m.end(), "allday"))
+
     return times
 
 
@@ -208,6 +226,7 @@ def clean_title(s):
     s = re.sub(r'\d限', '', s)
     s = re.sub(r'(今週|来週|再来週)の?[月火水木金土日]曜?日?', '', s)
     s = re.sub(r'(今日|本日|明日|明後日)', '', s)
+    s = re.sub(r'(午前|午後|終日)', '', s)
     s = re.sub(r'R\d+年度', '', s)
     s = re.sub(r'\d{4}年度', '', s)
     # 残ったゴミを掃除
@@ -278,15 +297,28 @@ def extract_events(text):
                     best_time = (i, tstart, tend)
             if best_time:
                 used_times.add(best_time[0])
-                events.append({
-                    "title": title,
-                    "start_date": dt.strftime("%Y-%m-%d"),
-                    "start_time": best_time[1],
-                    "end_date": dt.strftime("%Y-%m-%d"),
-                    "end_time": best_time[2],
-                    "location": location,
-                    "description": text,
-                })
+                bt_type = times[best_time[0]][4]
+                if bt_type == "allday":
+                    events.append({
+                        "title": title,
+                        "start_date": dt.strftime("%Y-%m-%d"),
+                        "start_time": "",
+                        "end_date": dt.strftime("%Y-%m-%d"),
+                        "end_time": "",
+                        "location": location,
+                        "description": text,
+                        "all_day": True,
+                    })
+                else:
+                    events.append({
+                        "title": title,
+                        "start_date": dt.strftime("%Y-%m-%d"),
+                        "start_time": best_time[1],
+                        "end_date": dt.strftime("%Y-%m-%d"),
+                        "end_time": best_time[2],
+                        "location": location,
+                        "description": text,
+                    })
             else:
                 events.append({
                     "title": title,
